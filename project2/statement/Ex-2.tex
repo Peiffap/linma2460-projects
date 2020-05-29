@@ -1,0 +1,309 @@
+\documentstyle [12pt]{article}
+
+\textheight22truecm
+\textwidth16.5truecm
+\setlength{\oddsidemargin}{0cm}
+\setlength{\evensidemargin}{0cm}
+\setlength{\topmargin}{0cm}
+
+
+\def\epi{{\rm epi \,}}
+\def\nr{\par \noindent}
+\def\diag{{\rm diag \,}}
+\def\inter{{\rm int \,}}
+\def\trace{{\rm Trace \,}}
+\def\lin{{\rm Lin \,}}
+\def\conv{{\rm Conv \,}}
+\def\beq{\begin{equation}}
+\def\eeq{\end{equation}}
+\newcommand{\rint}{{\rm rint\,}}
+\newcommand{\N}{\parallel}
+\newcommand{\A}{\mid}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{condition}{Condition}[section]
+\newtheorem{conjecture}{Conjecture}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{property}{Property}[section]
+\newtheorem{remark}{Remark}[section]
+\newcommand{\proof}{\bf Proof: \rm \nr}
+\newcommand{\qed}{\hfill $\Box$ \nr \medskip}
+\newcommand{\half}{\mbox{${1 \over 2}$}}
+\renewcommand\arraystretch{1}
+\def\ba{\begin{array}}
+\def\ea{\end{array}}
+\def\beann{\begin{eqnarray*}}
+\def\eeann{\end{eqnarray*}}
+\def\bea{\begin{eqnarray}}
+\def\eea{\end{eqnarray}}
+
+\def\BT{\begin{theorem}}
+\def\ET{\end{theorem}}
+\def\BL{\begin{lemma}}
+\def\EL{\end{lemma}}
+\def\BC{\begin{corollary}}
+\def\EC{\end{corollary}}
+\def\BA{\begin{assumption}}
+\def\EA{\end{assumption}}
+
+
+\def\la{\langle}
+\def\ra{\rangle}
+
+\def\theequation{\thesection.\arabic{equation}}
+
+\begin{document}
+\title{Methods for Nonsmooth Convex Minimization}
+\author{INMA 2460: \\
+Nonlinear Programming,\\
+Exercise $\#$ 2}
+
+%\date{March, 1996}
+
+%\date{March, 2004}
+
+%\date{April, 2015}
+
+%\date{April, 2016}
+%\date{April 2017}
+%\date{April 2018}
+%\date{April 2019}
+\date{April 2020}
+
+\maketitle
+
+\section{Motivation}
+
+The goal of this exercise consists in practical
+implementation and comparison of two nonsmooth convex
+optimization methods. The students are asked to create the
+corresponding computer programs, run several series of
+tests and write down a report with the analysis of the
+results. The formal requirements are as follows.
+\begin{itemize}
+\item
+{\bf Schedule:} The final report has to be presented no
+later than last Friday in May 2020.
+\item
+{\bf Marks:} This exercise is not obligatory.
+However, we strongly recommend to do it
+in the best possible way since
+it adds up to 5 points at
+the final examination.
+\item
+{\bf Software:} The students can use any
+programming language ({\em C, Fortran}, etc.) or
+environment ({\em MatLab}).
+\item
+{\bf Final Report.} This report is usually composed by the
+following parts:
+\begin{enumerate}
+\item
+Description of the problems and the numerical methods.
+\item\label{strat}
+Description of the set of test problems and
+the testing strategy.
+\item\label{an}
+Analysis of the results.
+\item
+Appendix (listing of the code and full computation
+results)
+\end{enumerate}
+Items \ref{strat} and \ref{an} are of the most importance
+for the final evaluation.
+\end{itemize}
+
+
+\section{Problem Formulation}
+
+The problem formulation is as follows:
+\beq\label{prob}
+\min\limits_{x \in R^n} \; f(x),
+\eeq
+where
+$f$ is a nondifferentiable convex function.
+\BA
+For simplicity, we assume that the minimum $x^*$ of
+problem (\ref{prob}) exists, and we know an estimate
+$\rho$:
+$$
+\N x_0 - x^* \N \leq \rho,
+$$
+where $x_0$ is the starting point of the method.
+\EA
+
+\section{Methods (Lecture 8)}
+
+In this exercise, it is necessary to test two numerical
+methods.
+
+\subsection{Subgradient Method}
+$$
+\ba{rcl}
+x_0 & \in & R^n;\\
+\\
+x_{k+1} & = & x_k - {\rho \over \sqrt{k+1}}{g_k \over \|
+g_k \| },
+\quad k \geq 0,
+\ea
+$$
+where $g_k \in \partial f(x_k)$.
+
+\subsection{Ellipsoid Method}
+$$
+\ba{rclrcl}
+x_0 & \in & R^n, & x_{k+1} & = & x_k - {1 \over n + 1}
+\cdot { H_k g_k \over \la H_k g_k, g_k \ra^{1/2}},\\
+\\
+H_0 & = & \rho^2 I_n, & H_{k+1} & = & {n^2 \over n^2 - 1}
+\left(H_k - { 2 \over n + 1} \cdot { H_k g_k g_k^T H_k
+\over \la H_k g_k, g_k \ra }\right), \quad k \geq 0,
+\ea
+$$
+where $I_n$ is the unit $n \times n$ matrix and
+$g_k \in \partial f(x_k)$.
+
+\section{Computation of the subgradients (Lecture 7)}\label{sc-set}
+
+Recall that vector $g \in R^n$ is called {\em subgradient}
+of function $f(\cdot)$ at point $x_0$, if for any $x \in
+R^n$ we have
+$$
+f(x) \geq f(x_0) + \la g, x - x_0 \ra.
+$$
+For nondifferentiable convex functions, the subgradient is
+not always unique. The set of all subgradients at $x_0$ is
+denoted by $\partial f(x_0)$.
+
+The following rules can be applied for computing the
+subgradients.
+
+1. If $f(\cdot)$ is differentiable at $x_0$, then the
+subdifferential consists of a single vector, the gradient:
+$$
+\partial f(x_0) \equiv \{ f'(x_0) \}.
+$$
+
+2. If $f(x) = \alpha f_1(x) + \beta f_2(x)$ with $\alpha$,
+$\beta \geq 0$, then
+$$
+\partial f(x_0) = \alpha \partial f_1(x_0) + \beta \partial f_2(x_0).
+$$
+This means that for any $g_1 \in \partial f_1(x_0)$ and
+$g_2 \in \partial f_2(x_0)$, we have
+$$
+\alpha g_1 + \beta g_2 \in \partial f(x_0).
+$$
+
+3. If $f(x) = \max \{ f_1(x), f_2(x) \}$, then
+$$
+\partial f(x_0) = \left\{
+\ba{cl}
+\partial f_1(x_0), & \mbox{if } f_1(x_0) > f_2(x_0),\\
+\\
+\partial f_2(x_0), & \mbox{if } f_1(x_0) < f_2(x_0),\\
+\\
+\mbox{Conv}\{ \partial f_1(x_0), \partial f_2(x_0) \}, &
+\mbox{if } f_1(x_0) = f_2(x_0).
+\ea
+\right.
+$$
+In the latter case, for any $g_1 \in \partial f_1(x_0)$,
+$g_2 \in \partial f_2(x_0)$ and $\alpha \in [0,1]$, we
+have
+$$
+\alpha g_1 + (1 - \alpha) g_2 \in \partial f(x_0).
+$$
+
+
+\section{Test Problems}
+
+Any test problems is defined by the choice of
+the following objects:
+\begin{itemize}
+\item
+objective function $f(x)$,
+\item
+starting point $x_0$ for the minimization process,
+\item
+accuracy of the approximate solution $\epsilon > 0$.
+\end{itemize}
+
+In order to have a complete information about the behavior
+of numerical method, it is reasonable to generate the test
+problems with known optimal solutions. Therefore, we
+suggest to use the following strategy.
+\begin{enumerate}
+\item
+Choose the dimension $n \geq 2$ of the space of variables.
+\item
+Fix the optimal solution of the problem as $x^* = 0 \in
+R^n$.
+\item
+Choose the objective function. We suggest to use the
+following family of objective functions:
+$$
+f(x) = \alpha f_1(x)
++ \beta f_2(x),
+$$
+where the parameters $\alpha$ and $\beta$ are nonnegative
+and
+$$
+\ba{l}
+f_1(x) = \sum\limits_{i=1}^{n-1} \A x^{(i)} \A,\\
+\\
+f_2(x) = \max\limits_{1 \leq i \leq n} \A x^{(i)} \A - x^{(1)}.
+\ea
+$$
+Then the Lipschitz constant $L$ for the objective function
+can be estimated as follows:
+$$
+L = \alpha \sqrt{n} + 2 \beta.
+$$
+\item
+Choose the starting point $x_0 \in Q$. The important
+characteristic of the problem is $\rho = \N x_0 - x^* \N$.
+\item
+Choose the desired accuracy $\epsilon > 0$. If you
+implement the above mentioned strategy for generating the
+objective function, then the optimal value of the problem
+is always zero. Therefore it is reasonable to introduce in
+the minimization scheme a termination criterion $f(x_k)
+\leq \epsilon$. Then the number of iterations, which is
+necessary to achieve the desired accuracy, can be easily
+fixed out.
+\end{enumerate}
+
+\section{Testing Strategy}
+
+In the final report, it is necessary to justify a
+conclusion on the performance and the {\em sensitivity} of
+the methods to the following characteristics:
+\begin{itemize}
+\item
+Desired accuracy $\epsilon$.
+\item
+Lipschitz constant $L$.
+\item
+Initial distance to the minimum $\rho$.
+\item
+Dimension of the space $n$.
+\end{itemize}
+The typical values of these parameters are presented in
+the following table.
+$$
+\ba{|l|c|r|r|r|}
+\hline
+                     & \epsilon & L & \rho & n\\ \hline
+\mbox{Low/Small}   &  10^{-2} & 10 & 10 & 10\\ \hline
+\mbox{Moderate}      &  10^{-4} & 100 & 100 & 100\\ \hline
+\mbox{High/Large}  &  10^{-6} & 1000 & 1000 & 1000 \\
+\hline
+\ea
+$$
+
+\end{document}
