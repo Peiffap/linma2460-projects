@@ -1,0 +1,699 @@
+%%% ====================================================================
+%%% @LaTeX-file{
+%%%   filename  = "aomsample.tex",
+%%%   copyright = "Copyright 1995, 1999 American Mathematical Society,
+%%%                2005 Hebrew University Magnes Press,
+%%%                all rights reserved.  Copying of this file is
+%%%                authorized only if either:
+%%%                (1) you make absolutely no changes to your copy,
+%%%                including name; OR
+%%%                (2) if you do make changes, you first rename it
+%%%                to some other name.",
+%%% }
+%%% ====================================================================
+\NeedsTeXFormat{LaTeX2e}% LaTeX 2.09 can't be used (nor non-LaTeX)
+[1994/12/01]% LaTeX date must December 1994 or later
+\documentclass[final]{aomart}
+\usepackage[english]{babel}
+
+\usepackage{mathtools,amssymb,amsthm, mathrsfs}
+\usepackage{bm}
+\usepackage{float}
+\usepackage{siunitx}
+\usepackage{minted}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usepgfplotslibrary{groupplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{tikzscale}
+\usepackage{booktabs}
+\pgfplotsset{compat=newest}
+\usepackage{subcaption}
+\usepackage{url}
+
+\newcommand{\py}[1]{\mintinline{Python}{#1}}
+
+\newcommand{\xk}{x_k}
+\newcommand{\xopt}{x^*}
+
+%    Some definitions useful in producing this sort of documentation:
+\chardef\bslash=`\\ % p. 424, TeXbook
+%    Normalized (nonbold, nonitalic) tt font, to avoid font
+%    substitution warning messages if tt is used inside section
+%    headings and other places where odd font combinations might
+%    result.
+\newcommand{\ntt}{\normalfont\ttfamily}
+%    command name
+\newcommand{\cn}[1]{{\protect\ntt\bslash#1}}
+%    LaTeX package name
+\newcommand{\pkg}[1]{{\protect\ntt#1}}
+%    File name
+\newcommand{\fn}[1]{{\protect\ntt#1}}
+%    environment name
+\newcommand{\env}[1]{{\protect\ntt#1}}
+\hfuzz1pc % Don't bother to report overfull boxes if overage is < 1pc
+
+%       Theorem environments
+
+%% \theoremstyle{plain} %% This is the default
+\newtheorem[{}\it]{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Property}
+\newtheorem{propo}[thm]{Proposition}
+\newtheorem{ax}{Axiom}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{rem}{Remark}[section]
+\newtheorem*[{}\it]{notation}{Notation}
+\newtheorem{step}{Step}
+
+\numberwithin{equation}{section}
+
+\newcommand{\thmref}[1]{Theorem~\ref{#1}}
+\newcommand{\secref}[1]{\S\ref{#1}}
+\newcommand{\lemref}[1]{Lemma~\ref{#1}}
+
+\renewcommand{\epsilon}{\varepsilon}
+\renewcommand{\theta}{\vartheta}
+\renewcommand{\rho}{\varrho}
+\renewcommand{\phi}{\varphi}
+
+\DeclareMathOperator{\newdiff}{d} % use \dif instead
+\newcommand{\dif}{\newdiff\!} % differential operator
+
+%    \interval is used to provide better spacing after a [ that
+%    is used as a closing delimiter.
+\newcommand{\interval}[1]{\mathinner{#1}}
+
+%    Notation for an expression evaluated at a particular condition. The
+%    optional argument can be used to override automatic sizing of the
+%    right vert bar, e.g. \eval[\biggr]{...}_{...}
+\newcommand{\eval}[2][\right]{\relax
+  \ifx#1\right\relax \left.\fi#2#1\rvert}
+
+%    Enclose the argument in vert-bar delimiters:
+\newcommand{\envert}[1]{\left\lvert#1\right\rvert}
+\let\abs=\envert
+
+%    Enclose the argument in double-vert-bar delimiters:
+\newcommand{\enVert}[1]{\left\lVert#1\right\rVert}
+\let\norm=\enVert
+
+\DeclarePairedDelimiterX{\inp}[2]{\langle}{\rangle}{#1, #2}
+
+\newcommand{\sconvex}{\mathscr{S}}
+
+\newcommand{\xbar}{\bar{x}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newcommand{\gmap}{x_Q(\xbar)}
+\newcommand{\rg}{g_Q(\xbar)}
+\newcommand{\proj}{\pi_Q(y)}
+
+%\setcounter{tocdepth}{5}
+
+\title[Methods for Smooth Constrained Minimization over a Simple Convex Set]{LINMA2460 -- Project 1\\
+Methods for Smooth Constrained Minimization over a Simple Convex Set}
+
+\author{Gilles Peiffer}
+\address{Université catholique de Louvain, Ottignies-Louvain-la-Neuve, Belgium}
+\fulladdress{École Polytechnique\\
+	Université catholique de Louvain\\
+	Place de l'Université 1, 1348 Ottignies-Louvain-la-Neuve, Belgium}
+\email{gilles.peiffer@student.uclouvain.be}
+\givenname{Gilles}
+\surname{Peiffer}
+
+%\oldsubsections
+\copyrightnote{\textcopyright~2020 Gilles Peiffer}
+
+\begin{document}
+
+\begin{abstract}
+	In this short paper, we present a study of two methods for smooth constrained minimization over a simple convex set: the gradient method and the optimal method.
+	We show that properties predicted by theory are observable in practice on a diverse set of test parameters, while also investigating the performance and sensitivity of the methods with respect to variations of the test set and characteristics of the problem.
+	For reproducibility purposes, the full computation results and source code are also made available.
+\end{abstract}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+Smooth constrained minimization is one of the most extensively studied topics in mathematical optimization.
+In this paper, we look at two of the most well-known methods in this domain: the gradient method, and the optimal method.
+
+In \secref{sec:desc_pnm}, the problem formulation and the mathematical background of the methods is explained in more depth.
+\secref{sec:desc_test} expands on the evaluation method used to compare the methods on the various test problems, whereas \secref{sec:analysis} comments on the results of the tests.
+Finally, in \secref{sec:conclusion}, we give a conclusion of the exercise.
+The appendix contains the full computation results, as well as the source code in Python used to generate these results.
+
+All throughout the paper, we use the notation of \cite{Nesterov2018}.
+
+\section{Description of problems and numerical methods}
+\label{sec:desc_pnm}
+In this section, we briefly explain the problem and methods used in the rest of the paper.
+
+\subsection{Problem description}
+\label{sec:prob}
+We are concerned with the problem
+\begin{equation}
+\min_{x \in Q} f(x),
+\end{equation}
+where \(Q\) is a \emph{simple} convex set (where simple is taken to mean ``on which points can be projected analytically''), and \(f\) is a continuous, strongly convex function with Lipschitz-continuous gradient.
+We also assume that \(f\) is twice differentiable, and that for all \(x \in \mathbb{R}^n\), we have
+\begin{equation}
+\mu I_n \preceq f''(x) \preceq L I_n, \quad \mu > 0.
+\end{equation}
+
+\subsubsection{Objective function}
+\label{sec:fun}
+For simplicity, we define \(f\) to be of the form
+\begin{equation}
+f(x) = \frac{\alpha}{2} \norm{x - x^*}^2 + \beta f_1 (x - x^*) + \gamma \big(f_2(x) - f_2(x^*) - \inp{f_2'(x^*)}{x - x^*}\big),
+\end{equation}
+where \(\alpha, \beta, \gamma > 0\) and
+\begin{align}
+f_1(x) &= \frac{1}{2} \left(\left(x^{(1)}\right)^2 + \sum_{i=1}^{n-1} \left(x^{(i)} - x^{(i+1)}\right)^2 + \left(x^{(n)}\right)^2\right),\\
+f_2(x) &= \ln \sum_{i=1}^n \exp\left(x^{(i)}\right),
+\end{align}
+where for numerical stability, we keep \(f_2\) in the form
+\begin{equation}
+f_2(x) = \delta + \ln \sum_{i=1}^n \exp\left(x^{(i)} - \delta\right),
+\end{equation}
+with \(\delta \geqslant \max_i x^{(i)}\).\footnote{In practice, \(\delta = \max_i x^{(i)}\) was chosen.}
+
+This then allows one to estimate the parameters of the objective function as \(\mu= \alpha\) and \(L = \alpha + 4 \beta + \gamma\). These values are considered known, and can thus be used in the optimization methods.
+We can hence write
+\begin{equation}
+f \in \sconvex^{2, 1}_{\mu = \alpha, L = \alpha + 4\beta + \gamma}(Q, \norm{\:\cdot\:}),
+\end{equation}
+where the norm is always assumed to be the Euclidean norm.
+
+\subsubsection{Feasible set}
+\label{sec:sets}
+\begin{defn}
+	A set \(Q \subseteq \mathbb{R}^n\) is called \emph{convex} if for any \(x, y \in Q\) and \(\alpha\) from \(\interval{[0, 1]}\) we have
+	\begin{equation}
+	\alpha x + (1 - \alpha y) \in Q.
+	\end{equation}
+\end{defn}
+The feasible set \(Q\) must be \emph{convex} set, and to simplify the implementation, we also require it to be \emph{simple}, that is, on which points can be projected analytically.
+
+More precisely, we work with three types of sets:\footnote{A fourth type of set, the positive orthant, was also examined, but due to the limitations of the numerical simulations was in practice equivalent to a box.}
+\begin{enumerate}
+	\item A \emph{ball}:
+	\begin{equation}
+	Q = \{x \in \mathbb{R}^n: \norm{x} \leqslant R\},
+	\end{equation}
+	where \(R\) is the radius of the ball.
+	\item A \emph{box}:
+	\begin{equation}
+	Q = \left\{x \in \mathbb{R}^n: a^{(i)} \leqslant x^{(i)} \leqslant b^{(i)},\quad i = 1, \dots, n\right\},
+	\end{equation}
+	where \(a\) and \(b\) are vectors delimiting the box.
+	\item A \emph{simplex}:
+	\begin{equation}
+	Q = \{x \in \mathbb{R}^n: \sum_{i=1}^n x^{(i)} = p, x^{(i)} \geqslant 0, i = 1, \dots, n\},
+	\end{equation}
+	where \(p\) is a parameter.
+\end{enumerate}
+
+\subsection{Optimization methods}
+We use two numerical methods to solve the problem of \secref{sec:prob}: the gradient method and the optimal method.
+
+\subsubsection{Gradient mapping}
+Both methods we use are based on the notion of gradient mapping.
+As defined in \cite{Nesterov2018}, the gradient mapping is a mathematical object which preserves the two most important properties of the gradient:
+\begin{enumerate}
+	\item The step along the direction of the anti-gradient decreases the function value by an amount comparable with the squared norm of the gradient:
+	\begin{equation}
+	f\left(x - \frac{1}{L} f'(x) \right) \leqslant f(x) - \frac{1}{2L} \norm{f'(x)}^2.
+	\end{equation}
+	\item The inequality
+	\begin{equation}
+	\inp{f'(x)}{x - x^*} \geqslant \frac{1}{L} \norm{f'(x)}^2.
+	\end{equation}
+\end{enumerate}
+
+Let us choose some \(\xbar \in Q\).
+The gradient mapping \(\gmap\) and the reduced gradient \(\rg\) of \(f\) on \(Q\) are then defined as
+\begin{align}
+\label{eq:gmap}
+\gmap &= \argmin_{x \in Q} \left( f(\xbar) + \inp{f'(\xbar)}{x - \xbar} + \frac{L}{2} \norm{x - \xbar}^2 \right),\\
+\rg &= L(\xbar - \gmap).
+\end{align}
+Using simple manipulations, one can transform the objective function of \eqref{eq:gmap} into the form
+\begin{equation}
+f(\xbar) - \frac{1}{2L} \norm{f'(\xbar)}^2 + \frac{L}{2} \norm{x - \left(\xbar - \frac{1}{L} f'(\xbar)\right)}^2.
+\end{equation}
+
+From this form, it is immediately apparent that computing the gradient mapping \(\gmap\) is equivalent to solving the following optimization problem:
+\begin{equation}
+\min_{x \in Q} \norm{x - \left(\xbar - \frac{1}{L} f'(\xbar)\right)}^2.
+\end{equation}
+Solving this problem is equivalent to finding the Euclidean projection of \(y = \xbar - \frac{1}{L} f'(\xbar)\) onto the set \(Q\), which we denote by \(\proj\).
+
+For the simple sets of \secref{sec:sets}, this projection can be found analytically.
+\begin{enumerate}
+	\item For the ball, the projection can simply be computed as
+	\begin{equation}
+	\proj = \left\{
+	\begin{array}{ll}
+	y, & \textnormal{if } \norm{y} \leqslant R,\\
+	R y / \norm{y}, & \textnormal{otherwise.}
+	\end{array}
+	\right.
+	\end{equation}
+	\item For the box, the projection becomes
+	\begin{equation}
+	\proj^{(i)} = \left\{
+	\begin{array}{ll}
+	b^{(i)}, & \textnormal{if } \proj^{(i)} \geqslant b^{(i)},\\
+	\proj^{(i)}, & \textnormal{if } a^{(i)} \leqslant \proj^{(i)} \leqslant b^{(i)},\\
+	a^{(i)}, & \textnormal{if } \proj^{(i)} \leqslant a^{(i)}.
+	\end{array}
+	\right.
+	\end{equation}
+	\item For the simplex, the algorithm presented in \cite{Chen2011} is used:
+	\begin{enumerate}
+		\item The algorithm takes an input \(y = (y^{(1)}, \dots, y^{(n)})^T \in \mathbb{R}^n\).
+		\item Sort \(y\) in ascending order as \(y^{\{1\}} \leqslant \dots \leqslant y^{\{n\}}\) and set \(i = n-1\).
+		\item \label{s3} Compute \(t_i = \frac{\sum_{j = i+1}^{n} y^{\{j\}} - p}{n - i}\).
+		If \(t \geqslant y^{\{i\}}\), set \(\hat{t} = t_i\) and go to Step~\ref{s5}.
+		Otherwise decrement \(i\) and go to Step~\ref{s4} if \(i = 0\), otherwise repeat Step~\ref{s3}.
+		\item \label{s4}
+		Set \(\hat{t} = \frac{\sum_{j=1}^n y^{\{j\}} - p}{n}\).
+		\item \label{s5}
+		Return \((y - \hat{t})_+\) as the projection of \(y\) onto the simplex.
+	\end{enumerate}
+\end{enumerate}
+
+\subsubsection{Gradient method}
+The gradient method can be defined by the following iteration scheme:
+\begin{enumerate}
+	\item Choose an initial point \(x_0 \in Q\) and iterate from there.
+	\item For \(k \geqslant 0\), set \(x_{k+1} = x_Q(x_k)\).
+\end{enumerate}
+We thus have the following theorem.
+\begin{thm}[Theorem~2.2.14 of \cite{Nesterov2018}]
+	\label{thm:2.2.14}
+	Let \(f \in \sconvex_{\mu, L}^{1, 1}(\mathbb{R}^n)\).
+	Then
+	\begin{equation}
+	\norm{x_k - x^*} \leqslant \left(1 - \frac{\mu}{L}\right)^k \norm{x_0 - x^*}.
+	\end{equation}
+\end{thm}
+\thmref{thm:2.2.14} allows us to give an upper bound on the distance from the optimum at every iteration.
+The result of \thmref{thm:2.2.14} is also stronger than the one in Theorem~2.2.8 of \cite{Nesterov2004}.
+
+We also remember the following result, which holds in the unconstrained, ``weakly'' convex case, but can still be useful.
+\begin{cor}[Corollary 2.1.2 of \cite{Nesterov2018}]
+	\label{cor:2.1.2}
+	Let \(f \in \mathscr{F}^{1, 1}_{L}(\mathbb{R}^n)\), then
+	\begin{equation}
+	f(x_k) - f(x^*) \leqslant \frac{2L\norm{x_0 - x^*}^2}{k+4}.
+	\end{equation}
+\end{cor}
+
+\subsubsection{Optimal method}
+The optimal method can be defined by the following iteration scheme:
+\begin{enumerate}
+	\item Choose an initial point \(y_0 = x_0 \in Q\) and define \(\beta = \frac{\sqrt{L} - \sqrt{\mu}}{\sqrt{L} + \sqrt{\mu}}\).
+	\item For \(k \geqslant 0\), set \(x_{k+1} = x_Q(y_k)\), where \(y_{k+1} = x_{k+1} + \beta (x_{k+1} - x_k)\).
+\end{enumerate}
+
+This is method~(2.2.63) of \cite{Nesterov2018}, with \(q_f = \mu/L\) and \(\alpha_k = \sqrt{\mu/L}\).
+We can thus refer to the following result on its rate of convergence (which is mentioned under the definition of method~(2.2.63) in \cite{Nesterov2018}).
+\begin{thm}[(2.2.23) of \cite{Nesterov2018}]
+	\label{thm:2.2.23}
+	The optimal method provides a sequence \(\{x_k\}\) such that
+	\begin{equation}
+	f(x_k) - f(x^*) \leqslant \frac{L+\mu}{2} \norm{x_0 - x^*}^2 \exp(-k \sqrt{\mu/L}).
+	\end{equation}
+\end{thm}
+
+Another result is given by Theorem~2.2.3 of \cite{Nesterov2004}:\footnote{In practice, this result is stronger at earlier iterations.}
+\begin{thm}[Theorem~2.2.3 of \cite{Nesterov2004}]
+	\label{thm:2.2.3}
+	The optimal method provides a sequence \(\{x_k\}\) such that
+	\begin{equation}
+	f(x_k) - f(x^*) \leqslant \min\left\{\left(1 - \frac{\mu}{L}\right)^k, \frac{4L}{(2\sqrt{L} + k \sqrt{\mu})^2}\right\} \left( f(x_0) - f(x^*) + \frac{\mu}{2} \norm{x_0 - x^*}^2 \right).
+	\end{equation}
+\end{thm}
+
+\subsubsection{Complexity lower bound}
+We also give the result of Theorem~2.1.13 of \cite{Nesterov2018}.
+\begin{thm}[Theorem~2.1.13 of \cite{Nesterov2018}]
+	\label{thm:2.1.13}
+	For any \(x_0 \in \mathbb{R}^{\infty}\) and any constants \(\mu > 0, L/\mu > 1\), there exists a function \(f \in \sconvex_{\mu, L}^{\infty, 1}(\mathbb{R}^{\infty})\) such that for most first-order methods (including the gradient and optimal methods),
+	\begin{align}
+	\norm{\xk - \xopt} &\geqslant \left(\frac{\sqrt{L/\mu} - 1}{\sqrt{L/\mu} + 1}\right)^k \norm{x_0 - \xopt},\\
+	f(\xk) - f(\xopt) &\geqslant \frac{\mu}{2} \left(\frac{\sqrt{L/\mu} - 1}{\sqrt{L/\mu} + 1}\right)^{2k} \norm{x_0 - \xopt}^2.
+	\end{align}
+\end{thm}
+While the conditions for applying \thmref{thm:2.1.13} are not exactly those of our situation, they can still provide useful references for evaluating the various methods.
+The way to interpret is to consider it as saying that there exists some function which would yield an optimization process which cannot converge faster than a given value by the theorem.
+As we do not know this function, there are no guarantees that this lower bound would apply to our case. However, we can make the assumption that our function is not too far removed from this pathological one, and would thus give rise to similar optimization processes.
+
+\section{Description of the set of test problems and testing strategy}
+\label{sec:desc_test}
+\subsection{Parameters}
+Several parameters influence the results:
+\begin{itemize}
+	\item The type of feasible set (\secref{sec:sets}) and its parameters.
+	This also includes the choice of the optimal solution, which is done at random inside \(Q\).
+	\item The type of method (gradient or optimal).
+	\item The objective function.
+	We choose a function such as the one in \secref{sec:fun}, hence three parameters \(\alpha, \beta, \gamma\) need to be chosen.
+	This choice also influences the condition number \(\kappa = \frac{L}{\mu} = \frac{\alpha + 4\beta + \gamma}{\alpha}\) of the problem.
+	We choose to fix these parameters as \(\alpha = 2/(\kappa - 1), \beta = 0.25, \gamma = 1\), thus leaving the condition number as a changeable parameter of the problem.
+	\item The desired accuracy of the final solution, \(\epsilon\).
+	As the objective function we choose always has \(f(x^*) = 0\), the termination criterion of the methods is \(f(x_k) \leqslant \epsilon\).
+	\item The initial distance to the minimum, \(R = \norm{x_0 - x^*}\).
+	This distance is taken into account when randomly generating the initial solution.
+	\item The dimension \(n\) of the problem.
+	\item (For the box and the simplex.) The number of active constraints \(m\) at \(x^*\).
+	If \(Q\) is a box, then \(\lfloor m/2 \rfloor\) components of \(x^*\) are set to \(a\) and \(\lceil m/2 \rceil\) are set to \(b\).
+	If \(Q\) is a simplex, then \(m\) components of \(x^*\) are set to \(0\).
+\end{itemize}
+
+\subsection{Testing strategy}
+Our testing procedure can be divided into two parts, each with its own goal:
+\begin{enumerate}
+	\item In the first part, we test different problems with the following parameters (and a maximum number of iterations of \(1.5 \times 10^5\)).
+	\[
+	\begin{array}{lccccc}
+	\toprule
+	\textnormal{Problem size} & \epsilon & \kappa & R & n & m\\
+	\midrule
+	\textnormal{Small} & 10^{-12} & 10 & 10 & 10 & 0\\
+	\textnormal{Moderate} & 10^{-12} & 10^3 & 10^2 & 10^2 & 0\\
+	\textnormal{High} & 10^{-12} & 10^6 & 10^3 & 10^3 & 0\\
+	\bottomrule
+	\end{array}
+	\]
+	We show the evolution of two values: the accuracy \(f(x_k) - f(x^*)\), and the distance from the minimum \(\norm{x_k - x^*}\), at each iteration.%TODO check norm whether needs squaring
+	\item In the second part, we look at the influence of changing each parameter individually, while maintaining the others fixed, on the number of iterations required to reach a given accuracy.
+	For this, we use the default values of the moderate size problem of the previous tests, while varying the other parameters in the following ranges, and with \(\epsilon = 10^{-12}\):
+	\begin{itemize}
+		\item \(\kappa \in \{10, 10^2, 10^3, \dots, 10^{10}\}\);
+		\item \(R \in \{10, 20, 50, 100, 200, 500, 1000, 2000\}\);
+		\item \(n \in \{10, 20, 50, 100, 200, 500, 1000, 2000\}\);
+		\item \(m \in \{0, 5, 10, \dots, 100\}\).
+	\end{itemize}
+	We do this for both methods.
+\end{enumerate}
+
+\section{Analysis of the results}
+\label{sec:analysis}
+\subsection{Convergence tests}
+The following figures show the results of the first test suite.
+For brevity, we only include in the main text the results on the ball; \secref{sec:full} contains the full computation results.
+We first give the various figures, then interpret these results in \secref{sec:expl1}.
+
+\subsubsection{Small example}
+Figure~\ref{fig:p1_ball_small_dist} shows the evolution as the number of iterations increases of the distance to the minimum (\(\norm{\xk - \xopt}\)), whereas Figure~\ref{fig:p1_ball_small_acc} shows the evolution of the accuracy, \(f(\xk) - f(\xopt)\).
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_ball_small_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the ball on the small example.}
+	\label{fig:p1_ball_small_dist}
+\end{figure}
+
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_ball_small_acc.tikz}
+	\caption{Evolution of the accuracy, for the ball on the small example.}
+	\label{fig:p1_ball_small_acc}
+\end{figure}
+
+\subsubsection{Moderate example}
+Figure~\ref{fig:p1_ball_moderate_dist} shows the evolution as the number of iterations increases of the distance to the minimum (\(\norm{\xk - \xopt}\)), whereas Figure~\ref{fig:p1_ball_moderate_acc} shows the evolution of the accuracy, \(f(\xk) - f(\xopt)\).
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_ball_moderate_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the ball on the moderate example.}
+	\label{fig:p1_ball_moderate_dist}
+\end{figure}
+
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_ball_moderate_acc.tikz}
+	\caption{Evolution of the accuracy, for the ball on the moderate example.}
+	\label{fig:p1_ball_moderate_acc}
+\end{figure}
+
+\subsubsection{Large example}
+Figure~\ref{fig:p1_ball_large_dist} shows the evolution as the number of iterations increases of the distance to the minimum (\(\norm{\xk - \xopt}\)), whereas Figure~\ref{fig:p1_ball_large_acc} shows the evolution of the accuracy, \(f(\xk) - f(\xopt)\).
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_ball_large_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the ball on the large example.}
+	\label{fig:p1_ball_large_dist}
+\end{figure}
+
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_ball_large_acc.tikz}
+	\caption{Evolution of the accuracy, for the ball on the large example.}
+	\label{fig:p1_ball_large_acc}
+\end{figure}
+
+\subsubsection{Conclusion}
+\label{sec:expl1}
+From the results of this part, we can see several things:
+\begin{itemize}
+	\item The various upper bounds predicted by the theory are always respected, when relevant even though in the case of Corollary~\ref{cor:2.1.2}, this should not necessarily be the case (as it concerns a relaxed version of the problem).
+	\item The lower bounds are mostly verified, though at the earlier iterations, the distance to the minimum is sometimes less than what would be predicted by \thmref{thm:2.1.13}.
+	This can be explained by the fact that, as mentioned before, the conditions to apply the theorem are not quite satisfied.
+	However, as the figures show, the lower bound seems to be respected as  \(k\) approaches infinity.
+	\item The optimal method performs significantly better than the gradient method in every single case.
+	This is due to the inertia step of the former, which allows it to converge much faster.
+	\item The larger the test problem, the harder it is to reach a given accuracy.
+	This observation is explored in more detail when considering the influence of \(n\) in \secref{sec:param}.
+	Similarly, the ball seems to be the hardest of the three types of feasible sets, followed by the box and then the simplex.
+	This is also explored further in \secref{sec:param}.
+	\item There is a fair amount of jitter on the iterations, most notably for the optimal method.
+	This is most likely a byproduct of the random numbers being used and the numerical inaccuracy involved in the calculations.
+\end{itemize}
+
+\subsection{Influence of parameters}
+\label{sec:param}
+The following figures show the results of the second test suite.
+For brevity, we only include in the main text the results on the box; \secref{sec:full} contains the full computation results.
+
+\subsubsection{Condition number}
+Figure~\ref{fig:p2_box_kappa} shows the influence of the condition number on the required number of iterations.
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p2_box_kappa.tikz}
+	\caption{Evolution of the number of iterations required for convergence, for the box, depending on the condition number of the problem.}
+	\label{fig:p2_box_kappa}
+\end{figure}
+
+As we can see, the higher \(\kappa\), the higher the required number of iterations.
+This result is expected; in \thmref{thm:2.2.14}, the higher the condition number \(\kappa = L/\mu\), the smaller the difference between the initial distance from the minimum and the distance from the minimum at iteration \(k\).
+\thmref{thm:2.2.23} and \thmref{thm:2.2.3} show the same behaviour.
+Similarly, Corollary~\ref{cor:2.1.2} takes into account the condition number implicitly due to the parameter \(L\), which increases as the condition number increases, hence increasing the lower bound on the number of iterations to reach a given accuracy.
+
+One can also adequately explain the nearly flat curve for higher values of \(\kappa\), as in the theorems referenced in the previous paragraph, the behaviour is asymptotic (i.e. \(1 + \mu/L\) does not diverge, but it gets nearer to one as \(\kappa\) increases).
+
+\subsubsection{Number of active constraints}
+Figure~\ref{fig:p2_box_m} shows the influence of the number of active constraints on the required number of iterations.
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p2_box_m.tikz}
+	\caption{Evolution of the number of iterations required for convergence, for the box, depending on the number of active constraints of the problem.}
+	\label{fig:p2_box_m}
+\end{figure}
+
+There is no theoretical argument for why the behaviour we observe shows a decrease of the number of iterations as \(m\) increases.
+However, intuitively, one can see that since we used the projected version of the numerical methods, the iterates are more likely to be close to the optimal solution when it is heavily constrained (and thus lies on the boundaries on which we project iterates).
+
+This also adequately explains why the optimal method seems to have an even stronger rate of decrease, as the inertia step is more likely to fall outside of the feasible set.
+
+\subsubsection{Dimension of the problem}
+Figure~\ref{fig:p2_box_n} shows the influence of the dimension of the problem on the required number of iterations.
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p2_box_n.tikz}
+	\caption{Evolution of the number of iterations required for convergence, for the box, depending on the dimension of the problem.}
+	\label{fig:p2_box_n}
+\end{figure}
+
+Increasing the dimension of the problem seems to make it harder up to some point, after which the curve flattens.
+This result is surprising, as contrary to the case of the condition number, the dimension of the problem does not appear in the formulas given by the theorems we cite.
+
+Again, we also note that the optimal method is better able to deal with the increase in dimensionality.
+
+\subsubsection{Initial distance from the minimum}
+Figure~\ref{fig:p2_box_residue} shows the influence of the initial distance to the minimum on the required number of iterations.
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p2_box_residue.tikz}
+	\caption{Evolution of the number of iterations required for convergence, for the box, depending on the initial distance to the minimum.}
+	\label{fig:p2_box_residue}
+\end{figure}
+
+The increase of the number of iterations when \(\norm{\xk - \xopt}\) increases is perfectly logical when comparing it with theoretical results.
+We also note the perennial superiority of the optimal method over the gradient method.
+In the case of the initial distance from the minimum, this superiority can be explained quite clearly by the inertia step of the optimal method, which allows it to quickly close larger gaps.
+
+
+\section{Conclusion}
+\label{sec:conclusion}
+In this paper, we have looked at two first-order numerical methods for smooth constrained minimization over a simplex convex set, the gradient method and the optimal method.
+We have extensively tested both methods, and compared practical results with theoretical findings, mainly from \cite{Nesterov2018}.
+
+We have studied the influence of different set types as well as several problem parameters on the convergence of both methods, leading to the conclusion that in many cases, the optimal method is the best choice due to its efficiency, attained through the use of a so-called ``inertia step''.
+
+Special care was taken to assure the reproducibility of the experiments, hence full computation results as well as complete source code listings are provided with the paper.
+
+\bibliography{report-project1.bib}
+\bibliographystyle{aomplain}
+
+\appendix
+
+\section{Computation results}
+\label{sec:full}
+We give here the full computation results of the various tests (excluding those already presented in the main text).
+
+\subsection{Convergence tests}
+\subsubsection{Box}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_box_small_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the box on the small example.}
+	\label{fig:app_box_small_dist}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_box_small_acc.tikz}
+	\caption{Evolution of the accuracy, for the box on the small example.}
+	\label{fig:app_box_small_acc}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_box_moderate_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the box on the moderate example.}
+	\label{fig:app_box_moderate_dist}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_box_moderate_acc.tikz}
+	\caption{Evolution of the accuracy, for the box on the moderate example.}
+	\label{fig:app_box_moderate_acc}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_box_large_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the box on the large example.}
+	\label{fig:app_box_large_dist}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_box_large_acc.tikz}
+	\caption{Evolution of the accuracy, for the box on the large example.}
+	\label{fig:app_box_large_acc}
+\end{figure}
+
+\subsubsection{Simplex}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_simplex_small_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the simplex on the small example.}
+	\label{fig:app_simplex_small_dist}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_simplex_small_acc.tikz}
+	\caption{Evolution of the accuracy, for the simplex on the small example.}
+	\label{fig:app_simplex_small_acc}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_simplex_moderate_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the simplex on the moderate example.}
+	\label{fig:app_simplex_moderate_dist}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_simplex_moderate_acc.tikz}
+	\caption{Evolution of the accuracy, for the simplex on the moderate example.}
+	\label{fig:app_simplex_moderate_acc}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_simplex_large_dist.tikz}
+	\caption{Evolution of the distance to the minimum, for the simplex on the large example.}
+	\label{fig:app_simplex_large_dist}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p1_simplex_large_acc.tikz}
+	\caption{Evolution of the accuracy, for the simplex on the large example.}
+	\label{fig:app_simplex_large_acc}
+\end{figure}
+
+\subsection{Influence of parameters}
+\subsubsection{Ball}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p2_ball_kappa.tikz}
+	\caption{Evolution of the number of iterations required for convergence, for the ball, depending on the condition number of the problem.}
+	\label{fig:p2_ball_kappa}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p2_ball_n.tikz}
+	\caption{Evolution of the number of iterations required for convergence, for the ball, depending on the dimension of the problem.}
+	\label{fig:p2_ball_n}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p2_ball_residue.tikz}
+	\caption{Evolution of the number of iterations required for convergence, for the ball, depending on the initial distance to the minimum of the problem.}
+	\label{fig:p2_ball_residue}
+\end{figure}
+
+\subsubsection{Simplex}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{plots/p2_simplex_kappa.tikz}
+	\caption{Evolution of the number of iterations required for convergence, for the simplex, depending on the condition number of the problem.}
+	\label{fig:p2_simplex_kappa}
+\end{figure}
+
+Other plots for the simplex took several hours to generate, and were hence omitted (number of active constraints, dimension of the problem, initial distance from the minimum).
+
+\section{Source code}
+The source code is divided into two parts:
+\begin{itemize}
+	\item \fn{solvers.py}, which contains the \py{solve} method.
+	\item \fn{plots.py}, which was used to generate the plots for this paper.
+\end{itemize}
+Both are available in full below.
+
+\subsection{\fn{solvers.py}}
+\inputminted{Python}{../src/solvers.py}
+
+\subsection{\fn{plots.py}}
+\inputminted{Python}{../src/plots.py}
+
+\end{document}
+\endinput
