@@ -1,0 +1,546 @@
+%%% ====================================================================
+%%% @LaTeX-file{
+%%%   filename  = "aomsample.tex",
+%%%   copyright = "Copyright 1995, 1999 American Mathematical Society,
+%%%                2005 Hebrew University Magnes Press,
+%%%                all rights reserved.  Copying of this file is
+%%%                authorized only if either:
+%%%                (1) you make absolutely no changes to your copy,
+%%%                including name; OR
+%%%                (2) if you do make changes, you first rename it
+%%%                to some other name.",
+%%% }
+%%% ====================================================================
+\NeedsTeXFormat{LaTeX2e}% LaTeX 2.09 can't be used (nor non-LaTeX)
+[1994/12/01]% LaTeX date must December 1994 or later
+\documentclass[final]{aomart}
+\usepackage[english]{babel}
+
+\usepackage{mathtools,amssymb,amsthm, mathrsfs}
+\usepackage{bm}
+\usepackage{float}
+\usepackage{siunitx}
+\usepackage{minted}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usepgfplotslibrary{groupplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{tikzscale}
+\usepackage{booktabs}
+\pgfplotsset{compat=newest}
+\usepackage{subcaption}
+\usepackage{url}
+
+\usepackage{etoolbox,xpatch}
+
+\makeatletter
+\AtBeginEnvironment{minted}{\dontdofcolorbox}
+\def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+\xpatchcmd{\inputminted}{\minted@fvset}{\minted@fvset\dontdofcolorbox}{}{}
+\xpatchcmd{\mintinline}{\minted@fvset}{\minted@fvset\dontdofcolorbox}{}{} % see https://tex.stackexchange.com/a/401250/
+\makeatother
+
+\newcommand{\Rn}{\mathbb{R}^n}
+
+\newcommand{\py}[1]{\mintinline{Python}{#1}}
+
+\newcommand{\xk}{x_k}
+\newcommand{\xopt}{x^*}
+\newcommand{\fopt}{f^*}
+\newcommand{\foptk}{f^*_k}
+
+%    Some definitions useful in producing this sort of documentation:
+\chardef\bslash=`\\ % p. 424, TeXbook
+%    Normalized (nonbold, nonitalic) tt font, to avoid font
+%    substitution warning messages if tt is used inside section
+%    headings and other places where odd font combinations might
+%    result.
+\newcommand{\ntt}{\normalfont\ttfamily}
+%    command name
+\newcommand{\cn}[1]{{\protect\ntt\bslash#1}}
+%    LaTeX package name
+\newcommand{\pkg}[1]{{\protect\ntt#1}}
+%    File name
+\newcommand{\fn}[1]{{\protect\ntt#1}}
+%    environment name
+\newcommand{\env}[1]{{\protect\ntt#1}}
+\hfuzz1pc % Don't bother to report overfull boxes if overage is < 1pc
+
+%       Theorem environments
+
+%% \theoremstyle{plain} %% This is the default
+\newtheorem[{}\it]{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Property}
+\newtheorem{propo}[thm]{Proposition}
+\newtheorem{ax}{Axiom}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{rem}{Remark}[section]
+\newtheorem*[{}\it]{notation}{Notation}
+\newtheorem{step}{Step}
+
+\numberwithin{equation}{section}
+
+\newcommand{\thmref}[1]{Theorem~\ref{#1}}
+\newcommand{\secref}[1]{\S\ref{#1}}
+\newcommand{\lemref}[1]{Lemma~\ref{#1}}
+
+\renewcommand{\epsilon}{\varepsilon}
+\renewcommand{\theta}{\vartheta}
+\renewcommand{\rho}{\varrho}
+\renewcommand{\phi}{\varphi}
+
+\DeclareMathOperator{\newdiff}{d} % use \dif instead
+\newcommand{\dif}{\newdiff\!} % differential operator
+
+%    \interval is used to provide better spacing after a [ that
+%    is used as a closing delimiter.
+\newcommand{\interval}[1]{\mathinner{#1}}
+
+%    Notation for an expression evaluated at a particular condition. The
+%    optional argument can be used to override automatic sizing of the
+%    right vert bar, e.g. \eval[\biggr]{...}_{...}
+\newcommand{\eval}[2][\right]{\relax
+  \ifx#1\right\relax \left.\fi#2#1\rvert}
+
+%    Enclose the argument in vert-bar delimiters:
+\newcommand{\envert}[1]{\left\lvert#1\right\rvert}
+\let\abs=\envert
+
+%    Enclose the argument in double-vert-bar delimiters:
+\newcommand{\enVert}[1]{\left\lVert#1\right\rVert}
+\let\norm=\enVert
+
+\DeclarePairedDelimiterX{\inp}[2]{\langle}{\rangle}{#1, #2}
+
+\newcommand{\sconvex}{\mathscr{S}}
+\newcommand{\convex}{\mathscr{F}}
+
+\newcommand{\xbar}{\bar{x}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newcommand{\gmap}{x_Q(\xbar)}
+\newcommand{\rg}{g_Q(\xbar)}
+\newcommand{\proj}{\pi_Q(y)}
+
+%\setcounter{tocdepth}{5}
+
+\title[Methods for Nonsmooth Convex Minimization]{LINMA2460 -- Project 2\\
+Methods for Nonsmooth Convex Minimization}
+
+\author{Gilles Peiffer}
+\address{Université catholique de Louvain, Ottignies-Louvain-la-Neuve, Belgium}
+\fulladdress{École Polytechnique\\
+	Université catholique de Louvain\\
+	Place de l'Université 1, 1348 Ottignies-Louvain-la-Neuve, Belgium}
+\email{gilles.peiffer@student.uclouvain.be}
+\givenname{Gilles}
+\surname{Peiffer}
+
+%\oldsubsections
+\copyrightnote{\textcopyright~2020 Gilles Peiffer}
+
+\begin{document}
+
+\begin{abstract}
+	In this short paper, we present a study of two methods for nonsmooth convex minimization: the subgradient method and the ellipsoid method.
+	We show that properties predicted by theory are observable in practice on a diverse set of test parameters, while also investigating the performance and sensitivity of the methods with respect to characteristics of the problem.
+	For reproducibility purposes, the full computation results and source code are also made available.
+\end{abstract}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+Nonsmooth convex minimization is an extensively studied topic in mathematical optimization.
+In this paper, we look at two of the most well-known methods in this domain: the subgradient method, and the ellipsoid method.
+
+In \secref{sec:desc_pnm}, the problem formulation and the mathematical background of the methods is explained in more depth.
+\secref{sec:desc_test} expands on the evaluation method used to compare the methods on the various test problems, whereas \secref{sec:analysis} comments on the results of the tests.
+Finally, in \secref{sec:conclusion}, we give a conclusion of the exercise.
+The appendix contains the full computation results, as well as the source code in Python used to generate these results.
+
+All throughout the paper, we use the notation of \cite{Nesterov2018}.
+
+\section{Description of problems and numerical methods}
+\label{sec:desc_pnm}
+In this section, we briefly explain the problem and methods used in the rest of the paper.
+
+\subsection{Problem description}
+\label{sec:prob}
+We are concerned with the problem
+\begin{equation}
+\min_{x \in \Rn} f(x),
+\end{equation}
+where \(f\) is a nondifferentiable convex function.
+For simplicity, we assume that the minimum \(\xopt\) of this problem exists, and that we know an estimate \(\rho\):
+\begin{equation}
+\norm{x_0 - \xopt} \leqslant \rho,
+\end{equation}
+where \(x_0\) is the starting point of the method.
+
+\subsubsection{Objective function}
+\label{sec:fun}
+For simplicity, we define \(f\) to be of the form
+\begin{equation}
+f(x) = \alpha f_1(x) + \beta f_2(x),
+\end{equation}
+where \(\alpha, \beta \geqslant 0\) and
+\begin{align}
+f_1(x) &= \sum_{i=1}^{n-1} \abs{x^{(i)}},\\
+f_2(x) &= \max_{1 \leqslant i \leqslant n} \abs{x^{(i)}} - x^{(1)}.
+\end{align}
+One can easily observe that the minimum of this function is \(f^* = 0\), at point \(x^* = 0\).
+
+This then allows one to estimate the Lipschitz continuity parameter \(L\) of the objective function as \(L = \alpha \sqrt{n} + 2 \beta\).
+We can hence write
+\begin{equation}
+f \in \convex^{0}_{L = \alpha \sqrt{n} + 2\beta}(\Rn).
+\end{equation}
+
+\subsection{Optimization methods}
+We use two numerical methods to solve the problem of \secref{sec:prob}: the subgradient method and the ellipsoid method.
+
+\subsubsection{Subgradient}
+Both methods we use are based on the notion of subgradient, as defined in Definition~\ref{def:subgradient}.
+\begin{defn}[Definition 3.1.5 of \cite{Nesterov2018}]
+	\label{def:subgradient}
+	A vector \(g\) is called a \emph{subgradient} of the function \(f\) at the point \(x_0 \in \mathop{\mathrm{dom}} f\) if for any \(y \in \mathop{\mathrm{dom}} f\) we have
+	\begin{equation}
+	f(y) \geqslant f(x_0) + \inp{g}{y - x_0}.
+	\end{equation}
+	The set of all subgradients of \(f\) at \(x_0\), \(\partial f(x_0)\), is called the \emph{subdifferential} of the function \(f\) at the point \(x_0\).
+\end{defn}
+
+Computing subgradients can be done in our case according to the following set of rules:
+\begin{enumerate}
+	\item If \(f\) is differentiable at \(x_0\), then
+	\begin{equation}
+	\partial f(x_0) \equiv \{f'(x_0)\}.
+	\end{equation}
+	\item If \(f(x) = \alpha f_1(x) + \beta f_2(x)\), with \(\alpha, \beta \geqslant 0\), then
+	\begin{equation}
+	\partial f(x_0) \equiv \alpha \partial f_1(x_0) + \beta \partial f_2(x_0).
+	\end{equation}
+	\item If \(f(x) = \max\{f_1(x), f_2(x)\}\), then
+	\begin{equation}
+	\partial f(x_0) \equiv \left\{
+	\begin{array}{cl}
+	\partial f_1(x_0), & \textnormal{if } f_1(x_0) > f_2(x_0),\\
+	\partial f_2(x_0), & \textnormal{if } f_1(x_0) < f_2(x_0),\\
+	\mathop{\mathrm{Conv}}\{\partial f_1(x_0), \partial f_2(x_0)\}, & \textnormal{if } f_1(x_0) = f_2(x_0),
+	\end{array}
+	\right.
+	\end{equation}
+	where the last case is taken to mean that for any \(g_1 \in \partial f_1(x_0), g_2 \in \partial f_2(x_0)\),
+	\begin{equation}
+	\alpha g_1 + (1 - \alpha) g_2 \in \partial f(x_0),
+	\end{equation}
+	where \(\alpha \in \interval{[0, 1]}\).
+\end{enumerate}
+
+\subsubsection{Subgradient method}
+\label{sec:subgradient_method}
+The subgradient method can be defined by the following iteration scheme:
+\begin{enumerate}
+	\item Choose an initial point \(x_0 \in \Rn\) and iterate from there.
+	\item For \(k \geqslant 0\), set
+	\begin{equation}
+	x_{k+1} \coloneqq \xk - \frac{\rho}{\sqrt{k+1}}\, \frac{g_k}{\norm{g_k}},
+	\end{equation}
+	where \(g_k \in \partial f(\xk)\).
+\end{enumerate}
+
+Let us define the following notation:
+\begin{equation}
+f^*_k \triangleq \min_{0 \leqslant i \leqslant k} f(x_i).
+\end{equation}
+
+We then have \thmref{thm:3.2.2}, based on Theorem~3.2.2 of \cite{Nesterov2018} with step size \(h_k \coloneqq \frac{\rho}{\sqrt{k+1}}\).
+\begin{thm}[Theorem~3.2.2 of \cite{Nesterov2018}]
+	\label{thm:3.2.2}
+	Let a function \(f\) be Lipschitz continuous with constant \(L\), with \(\norm{x_0 - \xopt} \leqslant \rho\).
+	Then
+	\begin{equation}
+	f^*_k - f^* \leqslant \frac{L\rho}{2}\,\frac{1 + \sum_{i=0}^k \frac{1}{i+1}}{\sum_{i=0}^k \frac{1}{\sqrt{i+1}}}.
+	\end{equation}
+\end{thm}
+
+\subsubsection{Ellipsoid method}
+The ellipsoid method can be defined by the following iteration scheme:
+\begin{enumerate}
+	\item Choose an initial point \(x_0 \in \Rn\), and set \(H_0 \coloneqq \rho^2 I_n\), with \(I_n\) the \(n \times n\) identity matrix.
+	\item For \(k \geqslant 0\), set
+	\begin{align}
+	x_{k+1} &\coloneqq \xk - \frac{1}{n+1}\, \frac{H_k g_k}{\inp{H_k g_k}{g_k}^{1/2}},\\
+	H_{k+1} &\coloneqq \frac{n^2}{n^2-1} \left(H_k - \frac{2}{n+1} \, \frac{H_k g_k g_k^T H_k}{\inp{H_k g_k}{g_k}}\right),
+	\end{align}
+	where \(g_k \in \partial f(x_k)\).
+\end{enumerate}
+
+We then have \thmref{thm:3.2.11}, based on Theorem~3.2.11 of \cite{Nesterov2018} but adapted for the unconstrained case.
+\begin{thm}[Adaptation of Theorem~3.2.11 of \cite{Nesterov2018}]
+	\label{thm:3.2.11}
+	Let a function \(f\) be Lipschitz continuous with constant \(L\), with \(\norm{x_0 - \xopt} \leqslant \rho\).
+	Then
+	\begin{equation}
+	f^*_k - f^* \leqslant L \rho \left(1 - \frac{1}{(n+1)^2}\right)^{k/2},
+	\end{equation}
+	where the meaning of \(f^*_k\) is the same as in \secref{sec:subgradient_method}.
+\end{thm}
+
+\subsubsection{Complexity lower bound}
+We also give the adapted result of Theorem~3.2.1 of \cite{Nesterov2018}.
+\begin{thm}[Theorem~3.2.1 of \cite{Nesterov2018}]
+	\label{thm:3.2.1}
+	For any \(k\), \(0 \leqslant k \leqslant n-1\), there exists a function \(f\) such that
+	\begin{equation}
+	f(\xk) - \fopt \geqslant \frac{L \rho}{2 (2 + \sqrt{k+1})},
+	\end{equation}
+	for both the subgradient and ellipsoid method.
+\end{thm}
+The way to interpret is to consider it as saying that there exists some function which would yield an optimization process which cannot converge faster than a given value by the theorem.
+As we do not know this function, there are no guarantees that this lower bound would apply to our case. However, we can make the assumption that our function is not too far removed from this pathological one, and would thus give rise to similar optimization processes.
+One should also take care to notice the stringent condition based on the problem dimension.
+
+\section{Description of the set of test problems and testing strategy}
+\label{sec:desc_test}
+
+\subsection{Parameters}
+\label{sec:param}
+Several parameters influence the results:
+\begin{itemize}
+	\item The type of method (subgradient or ellipsoid).
+	\item The objective function.
+	We choose a function such as the one in \secref{sec:fun}, hence two parameters \(\alpha, \beta \geqslant 0\) need to be chosen.
+	This choice influences the Lipschitz continuity parameter \(L = \alpha \sqrt{n} + 2\beta\) of the function.
+	We make the arbitrary choice to set \(\alpha = \beta = \frac{L}{\sqrt{n} + 2}\), thus leaving the Lipschitz parameter as a changeable value of the problem.
+	\item The desired accuracy of the final solution, \(\epsilon\).
+	As the objective function we choose has \(f^* = 0\), the termination criterion of the methods is \(f(\xk) \leqslant \epsilon\).
+	\item The initial distance to the minimum, \(\rho = \norm{x_0 - \xopt}\).
+	This distance is taken into account when randomly generating the initial solution.
+	\item The dimension \(n\) of the problem.
+\end{itemize}
+
+\subsection{Testing strategy}
+Several tests are performed in order to visualize the performance of each method, depending on the parameters of the problem:
+\begin{enumerate}
+	\item A first observation to make is the use of the term \(f^*_k - f^*\) in the theoretical predictions.
+	In the first suite of tests, discussed in \secref{sec:incr_decrease}, we will show that there is no theoretical guarantee that the objective function will decrease at each iteration.
+	\item In the second part, discussed in \secref{sec:convergence}, we test different problems with the following parameters (and a maximum number of iterations of \(10^5\)).
+	\[
+	\begin{array}{lcccc}
+	\toprule
+	\textnormal{Problem size} & \epsilon & L & \rho & n\\
+	\midrule
+	\textnormal{Small} & 10^{-12} & 10 & 10 & 10\\
+	\textnormal{Medium} & 10^{-1} & 10^2 & 10^2 & 10^2\\
+	\textnormal{Large} & 10 & 10^3 & 10^3 & 10^3\\
+	\bottomrule
+	\end{array}
+	\]
+	For each of these problems, we show the evolution of \(f^*_k - f^*\), and compare this with the theoretical predictions about the rate of convergence of Theorems~\ref{thm:3.2.2} and~\ref{thm:3.2.11}, as well as the lower bound given by \thmref{thm:3.2.1}.
+	\item In the third part, which is discussed in \secref{sec:exec_time}, we look at the performance of the methods with respect to their execution time per iteration.\footnote{We however do \emph{not} adapt the methods to be optimal for this given number of steps, in order to be consistent with other test suites.}
+	\item Finally, in the fourth suite of tests, we look at the influence of every parameter individually, while maintaining the others at a fixed value, on the number of iterations needed to reach a given accuracy.
+	For this, we use the default values of the small problem, with \(\epsilon = 10^{-1}\), while varying one of the parameters at a time, for the following values:
+	\begin{itemize}
+		\item \(L = 1, \dots, 100\);
+		\item \(\rho = 1, \dots, 100\);
+		\item \(n = 2, \dots, 250\).
+	\end{itemize}
+	We do this for both methods.
+	These results are analyzed in \secref{sec:param_tests}.
+\end{enumerate}
+
+\section{Analysis of the results}
+\label{sec:analysis}
+
+\subsection{Incremental decrease is not guaranteed}
+\label{sec:incr_decrease}
+Figure~\ref{fig:no_incr_decr_iterates} is a simple visualization of both methods operating on a 2-dimensional problem.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/no_incr_decr_iterates.tikz}
+	\caption{Iterates of the methods.}
+	\label{fig:no_incr_decr_iterates}
+\end{figure}
+
+
+Figure~\ref{fig:no_incr_decr_vals} shows the evolution of the objective value at each iteration for the same problem.
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/no_incr_decr_vals.tikz}
+	\caption{Accuracies of the methods.}
+\label{fig:no_incr_decr_vals}
+\end{figure}
+
+One observes that this value is not guaranteed to decrease at each iteration, which explains why theoretical upper bound guarantees only mention \(f^*_k \triangleq \min_{0 \leqslant i \leqslant k} f(x_i)\).
+
+\subsection{Convergence tests}
+\label{sec:convergence}
+The following figures show the results of the second test suite.
+We first give the various figures, then interpret these results in \secref{sec:expl_roc}.
+All figures represent the evolution of the best accuracy, \(\foptk - \fopt\), as a function of the number of iterations \(k\), for both the subgradient and ellipsoid methods, as well as some theoretical bounds taken from \cite{Nesterov2018} (Theorems~\ref{thm:3.2.2},~\ref{thm:3.2.11} and~\ref{thm:3.2.1}).
+
+
+\subsubsection{Small problem}
+Figure~\ref{fig:roc_small} gives the results for the small problem.
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/roc_small.tikz}
+	\caption{Best accuracy for both methods, on the small problem.}
+	\label{fig:roc_small}
+\end{figure}
+
+
+\subsubsection{Medium problem}
+Figure~\ref{fig:roc_medium} gives the results for the medium problem.
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/roc_medium.tikz}
+	\caption{Best accuracy for both methods, on the medium problem.}
+	\label{fig:roc_medium}
+\end{figure}
+
+\subsubsection{Large problem}
+Figure~\ref{fig:roc_large} gives the results for the large problem.
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/roc_large.tikz}
+	\caption{Best accuracy for both methods, on the large problem.}
+	\label{fig:roc_large}
+\end{figure}
+
+\subsubsection{Conclusion}
+\label{sec:expl_roc}
+
+Before interpreting the results, one might notice that while \thmref{thm:3.2.1} mentions \(f(\xk) - \fopt\), the figures only show \(\foptk - \fopt\).
+However, as the latter is a lower bound on the former, this is not an issue.
+
+A first result one can observe is that the theoretical upper bounds predicted by Theorems~\ref{thm:3.2.2} and~\ref{thm:3.2.11} are always respected, for every problem size.
+
+Similarly, the lower bound of \thmref{thm:3.2.1} is mostly respected, though its validity is only limited to the earliest iterations.
+One should note however that this lower bound is not actually a lower bound for our objective function specifically, but rather for a class of functions.
+With this in mind, one could conjecture that our objective function is among the hardest for that particular class, as the lower bound seems to be rather tight.
+
+Another observation is that the ellipsoid method is the best from a certain number of iterations onward, before which the subgradient method outperforms it.
+This switching behaviour is also observable in the theoretical bounds, though one the large problem, this is not shown on the figure due to space constraints.
+The fact that the larger the problem, the larger the iteration threshold for the switch can be explained by the presence of \(n\) in the statement of \thmref{thm:3.2.11}.
+
+Finally, one can also observe that problem size seems to influence complexity, as larger problems require more iterations to reach a given accuracy.
+One should also note that when compared with the smooth convex minimization task of the previous exercise, nonsmooth convex minimization is much harder and converges much slower, with the large problem being particularly hard to solve even with an accuracy of \(\epsilon = 10^3\).
+
+\subsection{Execution time}
+\label{sec:exec_time}
+Figure~\ref{fig:exec_time} gives the execution time per iteration of the solver for a problem with variable dimension \(n\), with a fixed number of iterations (\(10^3\)).
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/exec_time.tikz}
+	\caption{Execution time per iteration as a function of problem dimension.}
+	\label{fig:exec_time}
+\end{figure}
+
+One can observe on this figure that the ellipsoid method, while having less iterations than the subgradient method, takes a lot longer to perform one iteration of its optimization process.
+
+This should not come as a surprise, as building the successive \(H_k\) matrices takes quadratic time in the size \(n\) of the problem.
+
+Despite this practical inefficiency, the ellipsoid method was for a long time useful from a theoretical point of view, as only recently have interior-point algorithms been discovered with similar complexity properties.~\cite{GLS1993}
+
+\subsection{Influence of parameters}
+\label{sec:param_tests}
+The following figures show the results of the last test suite, which is concerned with the influence of each parameter on the number of iterations required for convergence.
+
+\subsubsection{Lipschitz parameter}
+\label{sec:param_L}
+Figure~\ref{fig:param_L} shows the influence of \(L\), the Lipschitz continuity parameter, on the convergence of both methods.
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/param_L.tikz}
+	\caption{Influence of \(L\) on the number of iterations required for convergence.}
+	\label{fig:param_L}
+\end{figure}
+
+One can make the observation, based on this figure, that the number of iterations increases with \(L\), a result corroborated by Theorems~\thmref{thm:3.2.2} and~\ref{thm:3.2.11}.
+These theorems also allow one to predict similar behaviour when \(\rho\) is changing, as both are used similarly in the formulas.
+
+Intuitively, this can be explained by the fact that the larger \(L\), the larger the difference in objective value for a given distance from the minimum (which is kept constant for every iteration).
+This observation is independent of the method used for the optimization process, and hence applies to both the subgradient and ellipsoid methods.
+
+\subsubsection{Initial distance from the minimum}
+Figure~\ref{fig:param_rho} shows the influence of \(\rho = \norm{x_0 - \xopt}\), the initial distance from the minimum, on the convergence of both methods.
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/param_rho.tikz}
+	\caption{Influence of \(\rho\) on the number of iterations required for convergence.}
+	\label{fig:param_rho}
+\end{figure}
+
+As with the Lipschitz parameter in \secref{sec:param_L}, the number of iterations needed for convergence increases with \(\rho\), which is again to be expected when looking at the theoretical bounds.
+
+Again, the intuition behind why this is the case is fairly trivial.
+If \(L\) is kept constant, then increasing the distance from the minimum increases the gap in objective values between the initial point and the optimum, which would mean more iterations are required to reach a given accuracy.
+This observation is again independent of the optimization method.
+
+\subsubsection{Problem dimension}
+Figure~\ref{fig:param_n} shows the influence of \(n\), the problem dimension, on the convergence of both methods.
+\begin{figure}[H]
+	\centering
+	\includegraphics{plots/param_n.tikz}
+	\caption{Influence of \(n\) on the number of iterations required for convergence.}
+	\label{fig:param_n}
+\end{figure}
+
+A first observation one can make is that the subgradient method is minimally affected by an increase of \(n\), the problem dimension, except for very low-dimensional problems (\(n < 10\)).
+On the other hand, the ellipsoid method seems to suffer strongly from such an increase, which can be explained by the bound of \thmref{thm:3.2.11}, which decreases more slowly as \(n\) increases.
+
+\section{Conclusion}
+\label{sec:conclusion}
+In this paper, we have looked at two first-order numerical methods for nonsmooth convex minimization, the subgradient method and the ellipsoid method.
+We have extensively tested both methods, and compared practical results with theoretical findings, from \cite{Nesterov2018}.
+
+We have experimentally observed the lack of guarantee on the incremental decrease of the objective value at each iteration, as well as the influence of several problem parameters on the convergence of both methods.
+Several theoretical bounds were also shown to be consistent with the observations in the paper.
+Additionally, we have exposed a practical problem with the ellipsoid method, which makes it unfit to handle high-dimensional optimization problems.
+In a practical problem (which typically entails large \(n\)), the subgradient method would thus be a safer choice than the ellipsoid method with respect to the execution time, though more experiences would be necessary to further quantify these findings.
+
+One also notices that nonsmooth convex optimization is noticeably harder than smooth convex minimization as it was explored in the previous exercise.
+
+Special care was taken to assure the reproducibility of the experiments, hence full computation results as well as complete source code listings are provided with the paper.
+
+\bibliography{report-project2.bib}
+\bibliographystyle{aomplain}
+
+\newpage
+\appendix
+
+\section{Computation results}
+\label{sec:full}
+All computation results are already present in the main text, in figures~\ref{fig:no_incr_decr_iterates} through~\ref{fig:param_n}.
+Additionally, the code to generate these figures (and the data they represent) is given in \secref{sec:code}.
+
+\section{Source code}
+\label{sec:code}
+The source code is divided into three parts:
+\begin{itemize}
+	\item \fn{solvers.py}, which contains the \py{solve} method.
+	\item \fn{benchmarks.py}, which was used to run the test suites.
+	\item \fn{plots.py}, which was used to generate the plots for this paper.
+\end{itemize}
+All three are available in full below.
+
+\subsection{\fn{solvers.py}}
+\inputminted[xleftmargin=\parindent,linenos,breaklines,frame=lines,framesep=2mm]{Python}{../src/solvers.py}
+
+\subsection{\fn{benchmarks.py}}
+\inputminted[xleftmargin=\parindent,linenos,breaklines,frame=lines,framesep=2mm]{Python}{../src/benchmarks.py}
+
+\subsection{\fn{plots.py}}
+\inputminted[xleftmargin=\parindent,linenos,breaklines,frame=lines,framesep=2mm]{Python}{../src/plots.py}
+
+\end{document}
+\endinput
